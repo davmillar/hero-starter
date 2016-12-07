@@ -176,11 +176,39 @@ var moves = {
     // This hero will try really hard not to die.
     coward: function (gameData, helpers) {
         return helpers.findNearestHealthWell(gameData);
+    },
+
+    buddySystem: function (gameData, helpers) {
+        var myHero = gameData.activeHero;
+
+        // Get stats on the nearest health well
+        var healthWellStats = helpers.findNearestObjectDirectionAndDistance(gameData.board, myHero, function (boardTile) {
+            return (boardTile.type === 'HealthWell');
+        });
+        var nearestTeamMember = helpers.findNearestObjectDirectionAndDistance(gameData.board, myHero, function (boardTile) {
+            return (boardTile.type === 'Hero' && boardTile.team === myHero.team);
+        });
+        var distanceToHealthWell = healthWellStats.distance;
+        var directionToHealthWell = healthWellStats.direction;
+
+        if (myHero.health < 50) {
+            // Heal no matter what if low health
+            return directionToHealthWell;
+        } else if (myHero.health < 100 && distanceToHealthWell === 1) {
+            // Heal if you aren't full health and are close to a health well already
+            return directionToHealthWell;
+        } else if (nearestTeamMember.health < 50) {
+            // Heal the nearest teammate if they're hurt...
+            return nearestTeamMember.direction;
+        } else {
+            // If healthy, go capture a diamond mine!
+            return helpers.findNearestNonTeamDiamondMine(gameData);
+        }
     }
 };
 
 // Set our hero's strategy
-var move =  moves.aggressor;
+var move =  moves.buddySystem;
 
 // Export the move function here
 module.exports = move;
