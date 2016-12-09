@@ -188,10 +188,12 @@ var moves = {
         var nearestTeamMember = helpers.findNearestObjectDirectionAndDistance(gameData.board, myHero, function (boardTile) {
             return (boardTile.type === 'Hero' && boardTile.team === myHero.team);
         });
-        var distanceToHealthWell = healthWellStats.distance;
-        var directionToHealthWell = healthWellStats.direction;
 
-        if (myHero.health < 50) {
+        var distanceToHealthWell = healthWellStats.distance,
+            directionToHealthWell = healthWellStats.direction,
+            nearestUnownedMine = helpers.findNearestNonTeamDiamondMine(gameData);
+
+        if (myHero.health < 50 || (!nearestUnownedMine && myHero.health < 100)) {
             // Heal no matter what if low health
             return directionToHealthWell;
         } else if (myHero.health < 100 && distanceToHealthWell === 1) {
@@ -200,9 +202,12 @@ var moves = {
         } else if (nearestTeamMember.health < 50) {
             // Heal the nearest teammate if they're hurt...
             return nearestTeamMember.direction;
+        } else if (nearestUnownedMine) {
+            // If healthy, and such mines exist, go capture a diamond mine!
+            return nearestUnownedMine;
         } else {
-            // If healthy, go capture a diamond mine!
-            return helpers.findNearestNonTeamDiamondMine(gameData);
+            // Attack!
+            return helpers.findNearestEnemy(gameData);
         }
     }
 };
